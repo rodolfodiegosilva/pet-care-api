@@ -4,28 +4,38 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 let mongoServer;
 
 const connect = async () => {
-  await mongoose.disconnect();
+
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 
   mongoServer = await MongoMemoryServer.create();
 
-  const mongoUri = await mongoServer.getUri();
+  const mongoUri = mongoServer.getUri();
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
   } catch (err) {
-    console.error(err);
+    console.error('Erro ao conectar ao banco de dados:', err);
   }
 };
 
 const close = async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 };
 
 const clear = async () => {
   const collections = mongoose.connection.collections;
 
   for (const key in collections) {
-    await collections[key].deleteMany();
+    if (collections.hasOwnProperty(key)) {
+      await collections[key].deleteMany();
+    }
   }
 };
 

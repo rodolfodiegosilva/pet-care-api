@@ -1,47 +1,51 @@
 const request = require('supertest');
 const db = require('./db');
 const app = require('../app');
+const { createUsers } = require('./populateUsers');
 
 beforeAll(async () => await db.connect());
-beforeEach(async () => await db.clear());
+beforeEach(async () =>   await db.clear());
 afterAll(async () => await db.close());
 
 describe('AuthController', () => {
-  test('registers a new user', async () => {
-    const userData = { email: 'test@example.com', password: 'password123', name: 'Test User', role: 'user' };
+  test('registers a new client', async () => {
+    const userData = {
+      email: 'testclient@example.com',
+      password: 'Abc@123',
+      name: 'Test Client',
+      role: 'client',
+      clientDetails: { clientType: 'new' }
+    };
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/auth/register')
       .send(userData)
       .expect(201);
 
-    expect(response.body).toHaveProperty('email', 'test@example.com');
+    expect(response.body).toHaveProperty('email', 'testclient@example.com');
   });
 
   test('login with valid credentials', async () => {
-    const userData = { email: 'test@example.com', password: 'password123', name: 'Test User', role: 'user' };
-    await request(app).post('/api/auth/register').send(userData);
 
-    const loginData = { email: 'test@example.com', password: 'password123' };
+    await createUsers('loginValidCredentialsTest');
+    const loginData = { email: 'clientloginValidCredentialsTest@example.com', password: 'Abc@123' };
     const response = await request(app)
-      .post('/api/auth/login')
+      .post('/auth/login')
       .send(loginData)
       .expect(200);
 
     expect(response.body).toHaveProperty('token');
-    expect(response.body).toHaveProperty('user.email', 'test@example.com');
+    expect(response.body).toHaveProperty('user.email', 'clientloginValidCredentialsTest@example.com');
   });
 
   test('logout user', async () => {
-    const userData = { email: 'test@example.com', password: 'password123', name: 'Test User', role: 'user' };
-    await request(app).post('/api/auth/register').send(userData);
-
-    const loginData = { email: 'test@example.com', password: 'password123' };
-    const loginResponse = await request(app).post('/api/auth/login').send(loginData);
+    await createUsers('logoutUserTest');
+    const loginData = { email: 'clientlogoutUserTest@example.com', password: 'Abc@123' };
+    const loginResponse = await request(app).post('/auth/login').send(loginData);
 
     const token = loginResponse.body.token;
 
     const response = await request(app)
-      .post('/api/auth/logout')
+      .post('/auth/logout')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
