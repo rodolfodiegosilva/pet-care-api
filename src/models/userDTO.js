@@ -7,22 +7,19 @@ class UserDTO {
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
 
-    // Se for um cliente, inclui detalhes específicos de cliente
     if (user.role === 'client' && user.clientDetails) {
       this.clientType = user.clientDetails.clientType;
-      this.planId = user.clientDetails.planId; // Inclui o plano se houver
+      this.planId = user.clientDetails.planId;
     }
 
-    // Se for um funcionário, inclui detalhes específicos de funcionário
     if (user.role === 'employee' && user.employeeDetails) {
       this.employeeType = user.employeeDetails.employeeType;
-      this.department = user.employeeDetails.department; // Inclui o departamento se houver
+      this.department = user.employeeDetails.department;
     }
   }
 
-  getId(){
+  getId() {
     return this.id;
   }
 }
-
 module.exports = UserDTO;

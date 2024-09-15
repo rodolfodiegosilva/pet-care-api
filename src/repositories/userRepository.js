@@ -3,11 +3,11 @@ const Client = require('../models/Client');
 const Employee = require('../models/Employee');
 
 const findUserByEmail = async (email) => {
-  return await UserBase.findOne({ email }); // Procurar em UserBase que inclui todos os subtipos
+  return await UserBase.findOne({ email });
 };
 
 const findUserById = async (id) => {
-  return await UserBase.findById(id); // Procurar em UserBase
+  return await UserBase.findById(id);
 };
 
 const createUser = async (userData) => {
@@ -23,7 +23,7 @@ const createUser = async (userData) => {
 };
 
 const findAll = async () => {
-  return await UserBase.find(); // Encontrar todos os usuários
+  return await UserBase.find();
 };
 
 module.exports = {
