@@ -1,30 +1,52 @@
+// repositories/serviceRepository.js
+
 const Service = require('../models/Service');
 
 const createService = async (serviceData) => {
-  const service = new Service(serviceData);
-  return await service.save();
-};
-
-const findServiceById = async (id) => {
-  return await Service.findById(id);
+  try {
+    const service = new Service(serviceData);
+    return await service.save();
+  } catch (error) {
+    throw new Error(`Erro ao criar o serviço: ${error.message}`);
+  }
 };
 
 const findAllServices = async () => {
-  return await Service.find();
+  try {
+    return await Service.find();
+  } catch (error) {
+    throw new Error(`Erro ao buscar os serviços: ${error.message}`);
+  }
 };
 
-const updateService = async (id, serviceData) => {
-  return await Service.findByIdAndUpdate(id, serviceData, { new: true, runValidators: true });
+const findServiceById = async (id) => {
+  try {
+    return await Service.findById(id);
+  } catch (error) {
+    throw new Error(`Erro ao buscar o serviço: ${error.message}`);
+  }
+};
+
+const updateService = async (id, updateData) => {
+  try {
+    return await Service.findByIdAndUpdate(id, updateData, { new: true });
+  } catch (error) {
+    throw new Error(`Erro ao atualizar o serviço: ${error.message}`);
+  }
 };
 
 const deleteService = async (id) => {
-  return await Service.findByIdAndDelete(id);
+  try {
+    return await Service.findByIdAndDelete(id);
+  } catch (error) {
+    throw new Error(`Erro ao deletar o serviço: ${error.message}`);
+  }
 };
 
 module.exports = {
   createService,
-  findServiceById,
   findAllServices,
+  findServiceById,
   updateService,
   deleteService,
 };

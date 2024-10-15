@@ -1,12 +1,21 @@
+// src/routes/auth.js
+
 const express = require('express');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/auth');
+const authorize = require('../middleware/authorize'); // Certifique-se de importar o middleware 'authorize'
 
 const router = express.Router();
 
-router.post('/register', authController.register);
+router.post('/register', authController.register); // Registro de clientes
+router.post(
+  '/register-employee',
+  authMiddleware,
+  authorize(['supervisor', 'manager']), // Aqui usamos o 'authorize', então precisamos importá-lo
+  authController.registerEmployee
+); // Registro de funcionários
 router.post('/login', authController.login);
-router.post('/logout', authMiddleware, authController.logout);
-router.get('/user', authMiddleware, authController.getUserProfile);
+router.post('/logout', authController.logout);
+router.get('/profile', authMiddleware, authController.getUserProfile);
 
 module.exports = router;

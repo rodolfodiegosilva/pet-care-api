@@ -1,3 +1,5 @@
+// models/Appointment.js
+
 const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema({
@@ -24,17 +26,28 @@ const appointmentSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
+    validate: {
+      validator: function(value) {
+        return value >= new Date();
+      },
+      message: 'A data do compromisso não pode ser no passado.',
+    },
   },
   status: {
     type: String,
     enum: ['scheduled', 'completed', 'canceled'],
     default: 'scheduled',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  notes: {
+    type: String,
+    trim: true,
   },
-});
+}, { timestamps: true });
+
+// Definição de índices
+appointmentSchema.index({ date: 1 });
+appointmentSchema.index({ client: 1 });
+appointmentSchema.index({ employee: 1 });
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 

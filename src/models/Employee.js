@@ -4,11 +4,14 @@ const UserBase = require('./UserBase');
 const EmployeeSchema = new mongoose.Schema({
   employeeType: {
     type: String,
-    enum: ['attendant', 'veterinarian', 'salesperson', 'supervisor', 'manager'],
+    required: true,
+    enum: ['supervisor', 'manager', 'cashier', 'veterinarian', 'driver', 'technician'],
   },
   department: { type: String },
+  // Outros campos específicos...
 });
 
-const Employee = UserBase.discriminator('Employee', EmployeeSchema);
+// Criar o discriminador 'employee' baseado em 'UserBase'
+const Employee = UserBase.discriminator('employee', EmployeeSchema);
 
 module.exports = Employee;
