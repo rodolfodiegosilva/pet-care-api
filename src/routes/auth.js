@@ -10,8 +10,6 @@ const router = express.Router();
 router.post('/register', authController.register); // Registro de clientes
 router.post(
   '/register-employee',
-  authMiddleware,
-  authorize(['supervisor', 'manager']), // Aqui usamos o 'authorize', então precisamos importá-lo
   authController.registerEmployee
 ); // Registro de funcionários
 router.post('/login', authController.login);

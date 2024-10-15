@@ -10,6 +10,14 @@ const createAppointment = async (appointmentData) => {
     throw new Error(`Erro ao criar o compromisso: ${error.message}`);
   }
 };
+const isEmployeeAvailable = async (employeeId, scheduledDate) => {
+  const conflictingAppointment = await Appointment.findOne({
+    employee: employeeId,
+    scheduledDate: scheduledDate,
+    status: { $ne: 'Cancelado' },
+  });
+  return !conflictingAppointment;
+};
 
 const findAppointmentById = async (id) => {
   try {
@@ -64,6 +72,7 @@ const deleteAppointment = async (id) => {
 
 module.exports = {
   createAppointment,
+  isEmployeeAvailable,
   findAppointmentById,
   findAllAppointments,
   updateAppointment,

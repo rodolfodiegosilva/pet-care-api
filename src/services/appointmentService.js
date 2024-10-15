@@ -7,50 +7,30 @@ const Service = require('../models/Service');
 const Employee = require('../models/Employee');
 const Appointment = require('../models/Appointment');
 
-const createAppointment = async (appointmentData, user) => {
-  // Validação dos dados do compromisso
-  const { error } = validateAppointmentData(appointmentData);
-  if (error) {
-    throw new Error(error.details[0].message);
+const createAppointment = async (appointmentData) => {
+  // Verificar se o serviço existe
+
+  const service = await serviceRepository.findServiceById(appointmentData.serviceId);
+  if (!service) {
+    throw new Error('Serviço não encontrado');
   }
 
-  // Verificar se o serviço existe e está ativo
-  const service = await Service.findById(appointmentData.service);
-  if (!service || !service.active) {
-    throw new Error('Serviço inválido ou inativo.');
+  // Verificar disponibilidade dos funcionários para o serviço e horário
+  const availableEmployees = await employeeService.getAvailableEmployeesForService(
+    service._id,
+    appointmentData.scheduledDate
+  );
+  if (availableEmployees.length === 0) {
+    throw new Error('Não há funcionários disponíveis para este serviço no horário solicitado');
   }
 
-  // Verificar se o funcionário existe
-  const employee = await Employee.findById(appointmentData.employee);
-  if (!employee) {
-    throw new Error('Funcionário inválido.');
-  }
-
-  // Verificar conflitos de horário
-  const conflict = await Appointment.findOne({
-    employee: appointmentData.employee,
-    date: appointmentData.date,
-  });
-  if (conflict) {
-    throw new Error('O funcionário já possui um compromisso neste horário.');
-  }
-
-  // Verificar permissões
-  if (user.role === 'client') {
-    // Cliente só pode agendar para si mesmo
-    if (appointmentData.client !== user._id.toString()) {
-      throw new Error('Você não pode agendar para outro cliente.');
-    }
-
-    // Verificar se o pet pertence ao cliente
-    const pet = await Pet.findById(appointmentData.pet);
-    if (!pet || pet.owner.toString() !== user._id.toString()) {
-      throw new Error('Você não pode agendar com um pet que não lhe pertence.');
-    }
-  }
+  // Selecionar um funcionário (pode ser por lógica de distribuição)
+  appointmentData.employee = availableEmployees[0]._id;
 
   // Criar o agendamento
-  return await appointmentRepository.createAppointment(appointmentData);
+  const appointment = await appointmentRepository.createAppointment(appointmentData);
+
+  return appointment;
 };
 
 const getAppointmentById = async (id) => {
