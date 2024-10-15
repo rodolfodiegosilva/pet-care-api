@@ -1,19 +1,21 @@
+// services/serviceService.js
+
 const serviceRepository = require('../repositories/serviceRepository');
 
 const createService = async (serviceData) => {
   return await serviceRepository.createService(serviceData);
 };
 
-const getServiceById = async (id) => {
-  return await serviceRepository.findServiceById(id);
-};
-
 const getAllServices = async () => {
   return await serviceRepository.findAllServices();
 };
 
-const updateService = async (id, serviceData) => {
-  return await serviceRepository.updateService(id, serviceData);
+const getServiceById = async (id) => {
+  return await serviceRepository.findServiceById(id);
+};
+
+const updateService = async (id, updateData) => {
+  return await serviceRepository.updateService(id, updateData);
 };
 
 const deleteService = async (id) => {
@@ -22,8 +24,8 @@ const deleteService = async (id) => {
 
 module.exports = {
   createService,
-  getServiceById,
   getAllServices,
+  getServiceById,
   updateService,
   deleteService,
 };

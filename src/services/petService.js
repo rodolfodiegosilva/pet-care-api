@@ -1,53 +1,44 @@
 const petRepository = require('../repositories/petRepository');
 const userRepository = require('../repositories/userRepository');
 const UserDTO = require('../models/userDTO');
-const ERROR_MESSAGES = {
-  PET_NOT_FOUND: 'Pet não encontrado.',
-  OWNER_DATA_NOT_FOUND: 'Dados do proprietário não encontrados.',
-  ACCESS_DENIED: 'Acesso negado. Você não é o proprietário deste pet.',
-};
 
 const verifyOwnership = async (pet, userId, userRole) => {
-  const owner = await userRepository.findUserById(userId);
-  if (!owner) {
-    throw new Error(ERROR_MESSAGES.OWNER_DATA_NOT_FOUND);
-  }
-  if (userRole === 'client' && pet.owner.id.toString() !== userId.toString()) {
-    throw new Error(ERROR_MESSAGES.ACCESS_DENIED);
+  const ownerId = pet.owner._id ? pet.owner._id.toString() : pet.owner.toString();
+  if (userRole === 'client' && ownerId !== userId.toString()) {
+    throw new Error('Acesso negado');
   }
 };
+
 
 const createPet = async (petData) => {
-  const existingPet = await petRepository.findPetByAttributes(
-    petData.name,
-    petData.birthDate,
-    petData.owner,
-    petData.species
-  );
+  try {
+    let pet = await petRepository.createPet(petData);
+    pet = await pet.populate('owner');
 
-  if (existingPet) {
-    throw new Error('Pet já cadastrado com esses atributos.');
+    const ownerDTO = new UserDTO(pet.owner);
+
+    return {
+      ...pet.toObject(),
+      owner: ownerDTO,
+    };
+  } catch (error) {
+    if (error.code === 11000) {
+      // Erro de duplicidade de chave
+      throw new Error('Pet já registrado com esses atributos.');
+    }
+    throw error;
   }
-
-  let pet = await petRepository.createPet(petData);
-  pet = await pet.populate('owner');
-
-  const ownerDTO = new UserDTO(pet.owner);
-
-  return {
-    ...pet.toObject(),
-    owner: ownerDTO,
-  };
 };
+
 
 const getPetById = async (petId, userId, userRole) => {
   let pet = await petRepository.findPetById(petId);
 
   if (!pet) {
-    throw new Error(ERROR_MESSAGES.PET_NOT_FOUND);
+    throw new Error('Pet não encontrado');
   }
 
-  verifyOwnership(pet, userId, userRole);
+  await verifyOwnership(pet, userId, userRole);
 
   if (pet.owner) {
     const ownerDTO = new UserDTO(pet.owner);
@@ -60,44 +51,92 @@ const getPetById = async (petId, userId, userRole) => {
   return pet;
 };
 
+
 const getAllPets = async () => {
-  return await petRepository.findAllPets();
+  const pets = await petRepository.findAllPets();
+  return pets.map((pet) => ({
+    ...pet.toObject(),
+    owner: new UserDTO(pet.owner),
+  }));
 };
 
 const getPetsByOwnerId = async (ownerId) => {
-  return await petRepository.findPetsByOwnerId(ownerId);
+  const pets = await petRepository.findPetsByOwnerId(ownerId);
+  return pets.map((pet) => ({
+    ...pet.toObject(),
+    owner: new UserDTO(pet.owner),
+  }));
 };
 
 const updatePet = async (petId, petData, userId, userRole) => {
   let pet = await petRepository.findPetById(petId);
 
   if (!pet) {
-    throw new Error(ERROR_MESSAGES.PET_NOT_FOUND);
+    throw new Error('Pet não encontrado');
   }
 
-  verifyOwnership(pet, userId, userRole);
+  await verifyOwnership(pet, userId, userRole);
 
-  return await petRepository.updatePet(petId, petData);
+  // Clientes não podem atualizar o histórico médico
+  if (userRole === 'client') {
+    delete petData.medicalHistory;
+  }
+
+  const updatedPet = await petRepository.updatePet(petId, petData);
+
+  return updatedPet;
 };
 
 const deletePet = async (petId, userId, userRole) => {
   let pet = await petRepository.findPetById(petId);
 
   if (!pet) {
-    throw new Error(ERROR_MESSAGES.PET_NOT_FOUND);
+    throw new Error('Pet não encontrado');
   }
 
-  verifyOwnership(pet, userId, userRole);
+  await verifyOwnership(pet, userId, userRole);
 
   await petRepository.deletePet(petId);
 };
 
+const addMedicalRecord = async (petId, medicalRecordData, userId) => {
+  const pet = await petRepository.findPetById(petId);
+
+  if (!pet) {
+    throw new Error('Pet não encontrado');
+  }
+
+  // Adicionar o ID do veterinário ao registro
+  medicalRecordData.veterinarian = userId;
+
+  // Adicionar o registro médico ao histórico
+  pet.medicalHistory.push(medicalRecordData);
+
+  // Salvar as alterações
+  await pet.save();
+
+  return pet;
+};
+
+const getMedicalHistory = async (petId, userId, userRole) => {
+  const pet = await petRepository.findPetById(petId);
+
+  if (!pet) {
+    throw new Error('Pet não encontrado');
+  }
+
+  await verifyOwnership(pet, userId, userRole);
+
+  return pet.medicalHistory;
+};
+
 module.exports = {
-  getPetsByOwnerId,
   createPet,
   getPetById,
   getAllPets,
+  getPetsByOwnerId,
   updatePet,
   deletePet,
-  verifyOwnership, // Expondo para uso em outros contextos
+  addMedicalRecord,
+  getMedicalHistory,
 };

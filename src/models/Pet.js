@@ -1,88 +1,84 @@
 const mongoose = require('mongoose');
 
+// Definição do esquema para o histórico médico
 const medicalHistorySchema = new mongoose.Schema({
   date: {
     type: Date,
     required: true,
+    default: Date.now,
   },
   description: {
     type: String,
     required: true,
+    trim: true,
   },
-  veterinarianId: {
+  veterinarian: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Veterinarian',
-  }
-});
-
-const petSchema = new mongoose.Schema({
-  name: {
-    type: String,
+    ref: 'UserBase', // Assumindo que veterinários são usuários com papel 'employee' e tipo 'veterinarian'
     required: true,
-    trim: true,
-  },
-  species: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  breed: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  gender: {
-    type: String,
-    enum: ['Macho', 'Fêmea'],
-    required: true,
-  },
-  weight: {
-    type: Number,
-    required: false,
-  },
-  birthDate: {
-    type: Date,
-    required: true,
-  },
-  microchipNumber: {
-    type: String,
-    required: false,
-  },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
-    required: true,
-  },
-  medicalHistory: {
-    type: [medicalHistorySchema],
-    required: false,
-  },
-  photos: {
-    type: [String],
-    required: false,
-  },
-  feedingInstructions: {
-    type: String,
-    required: false,
-  },
-  behaviorNotes: {
-    type: String,
-    required: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 
-petSchema.pre('save', function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
+// Definição do esquema principal do Pet
+const petSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    species: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    breed: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    gender: {
+      type: String,
+      enum: ['Macho', 'Fêmea'],
+      required: true,
+    },
+    weight: {
+      type: Number,
+      min: 0,
+    },
+    birthDate: {
+      type: Date,
+      required: true,
+    },
+    microchipNumber: {
+      type: String,
+      trim: true,
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UserBase',
+      required: true,
+    },
+    medicalHistory: [medicalHistorySchema],
+    photos: [String],
+    feedingInstructions: {
+      type: String,
+      trim: true,
+    },
+    behaviorNotes: {
+      type: String,
+      trim: true,
+    },
+  },
+  { timestamps: true }
+);
+
+// Adicionar índice composto único
+petSchema.index(
+  { name: 1, species: 1, breed: 1, gender: 1, owner: 1 },
+  { unique: true }
+);
+
 
 const Pet = mongoose.model('Pet', petSchema);
 

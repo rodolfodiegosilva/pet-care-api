@@ -5,10 +5,12 @@ const createPet = async (petData) => {
   return await pet.save();
 };
 
+// Adicionar este método ao petRepository.js
 
-const findPetByAttributes = async (name, birthDate, owner, species) => {
-  return await Pet.findOne({ name, birthDate, owner, species });
+const findPetByAttributes = async (name, species, breed, gender, owner) => {
+  return await Pet.findOne({ name, species, breed, gender, owner });
 };
+
 
 const findPetById = async (petId) => {
   return await Pet.findById(petId).populate('owner');
@@ -17,12 +19,9 @@ const findPetById = async (petId) => {
 const findAllPets = async () => {
   return await Pet.find().populate('owner');
 };
-const findPetsByOwnerId = async (ownerId) => {
-  return await Pet.find({ owner: ownerId });
-};
 
-const findPetByOwnerId = async (ownerId) => {
-  return await Pet.findOne({ owner: ownerId });
+const findPetsByOwnerId = async (ownerId) => {
+  return await Pet.find({ owner: ownerId }).populate('owner');
 };
 
 const updatePet = async (id, petData) => {
@@ -34,12 +33,11 @@ const deletePet = async (id) => {
 };
 
 module.exports = {
-  findPetByOwnerId,
-  findPetsByOwnerId,
-  findPetByAttributes,
   createPet,
+  findPetByAttributes,
   findPetById,
   findAllPets,
+  findPetsByOwnerId,
   updatePet,
   deletePet,
 };
